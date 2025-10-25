@@ -16,7 +16,7 @@ conda create -y -n cmirobot python=3.10
 conda activate cmirobot
 ```
 
-### Install LeRobot 🤗
+### Install CMIRobot 
 
 #### From Source
 
