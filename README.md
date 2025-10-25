@@ -26,3 +26,9 @@ First, clone the repository and navigate into the directory:
 git clone https://github.com/wangzhian2017/CMIRobot.git
 cd lerobot
 ```
+
+Then, install the library in editable mode. This is useful if you plan to contribute to the code.
+
+```bash
+pip install -e .
+```
