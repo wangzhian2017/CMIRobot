@@ -1,6 +1,6 @@
 <h2 align="center">
     <p><a href="#">
-        Build Your Own CMI Robot!</a></p>
+        Build Your Own Desktop Robot!</a></p>
 </h2>
 
 ## Installation
