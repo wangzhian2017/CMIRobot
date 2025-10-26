@@ -7,12 +7,12 @@ src/cmirobot.egg-info/dependency_links.txt
 src/cmirobot.egg-info/requires.txt
 src/cmirobot.egg-info/top_level.txt
 src/cmirobot/envs/__init__.py
-src/cmirobot/envs/grab_env.py
 src/cmirobot/envs/grid_world.py
-src/cmirobot/envs/mujoco_minimal_viewer.py
+src/cmirobot/envs/so100.py
 src/cmirobot/envs/transforms.py
 src/cmirobot/envs/utils.py
 src/cmirobot/robots/__init__.py
 src/cmirobot/robots/so100.py
 src/cmirobot/teleoperators/__init__.py
 src/cmirobot/teleoperators/gamepad_teleop.py
+src/cmirobot/teleoperators/teleop_keyboard.py
