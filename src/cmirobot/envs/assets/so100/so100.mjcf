@@ -1,0 +1,114 @@
+<mujoco model="so_arm100">
+  <default>
+    <default class="robot">
+      <default class="motor">
+        <joint />
+        <motor />
+      </default>
+      <default class="visual">
+        <geom material="visualgeom" contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="collision">
+        <geom material="collision_material" condim="3" contype="0" conaffinity="1" priority="1" group="1" solref="0.005 1" solimp="0.99 0.999 1e-05" friction="1 0.01 0.01" />
+      </default>
+    </default>
+  </default>
+
+  <compiler angle="radian" />
+
+  <asset>
+    <material name="3d_printed" rgba="1.0 0.82 0.12 1.0" />
+    <material name="sts3215" rgba="0.1 0.1 0.1 1.0" />
+    <material name="default_material" rgba="0.7 0.7 0.7 1" />
+    <material name="collision_material" rgba="1.0 0.28 0.1 0.9" />
+    <mesh name="Base.stl" file="assets/Base.stl" />
+    <mesh name="Base_Motor.stl" file="assets/Base_Motor.stl" />
+    <mesh name="Rotation_Pitch.stl" file="assets/Rotation_Pitch.stl" />
+    <mesh name="Rotation_Pitch_Motor.stl" file="assets/Rotation_Pitch_Motor.stl" />
+    <mesh name="Upper_Arm.stl" file="assets/Upper_Arm.stl" />
+    <mesh name="Upper_Arm_Motor.stl" file="assets/Upper_Arm_Motor.stl" />
+    <mesh name="Lower_Arm.stl" file="assets/Lower_Arm.stl" />
+    <mesh name="Lower_Arm_Motor.stl" file="assets/Lower_Arm_Motor.stl" />
+    <mesh name="Wrist_Pitch_Roll.stl" file="assets/Wrist_Pitch_Roll.stl" />
+    <mesh name="Wrist_Pitch_Roll_Motor.stl" file="assets/Wrist_Pitch_Roll_Motor.stl" />
+    <mesh name="Fixed_Jaw.stl" file="assets/Fixed_Jaw.stl" />
+    <mesh name="Fixed_Jaw_Motor.stl" file="assets/Fixed_Jaw_Motor.stl" />
+    <mesh name="Moving_Jaw.stl" file="assets/Moving_Jaw.stl" />
+  </asset>
+
+  <worldbody>
+    <body name="base_link" pos="0.00000000 0.00000000 0.8" quat="1 0 0 0" childclass="robot">
+      <freejoint name="floating_base" />
+      <geom name="base_link_collision" pos="0 0 0" quat="1 0 0 0" type="mesh" mesh="Base.stl" class="collision" />
+      <geom name="base_link_visual_0" pos="0 0 0" quat="0.8775825618903728 0.0 0.0 0.479425538604203" material="3d_printed" type="mesh" mesh="Base.stl" class="visual" />
+      <geom name="base_link_visual_1" pos="0 0 0" quat="1 0 0 0" material="sts3215" type="mesh" mesh="Base_Motor.stl" class="visual" />
+      <body name="shoulder" pos="0 -0.0452 0.0165" quat="0.7071090180427968 0.7071045443232222 0.0 0.0">
+        <joint name="shoulder_pan" type="hinge" ref="0.0" class="motor" range="-2 2" axis="0 1 0" />
+        <inertial pos="-9.07886e-05 0.0590972 0.031089" quat="1.0 0.0 0.0 0.0" mass="0.119226" diaginertia="5.94278e-05 5.89975e-05 3.13712e-05" />
+        <geom name="shoulder_collision" pos="0 0 0" quat="1 0 0 0" type="mesh" mesh="Rotation_Pitch.stl" class="collision" />
+        <geom name="shoulder_visual_0" pos="0 0 0" quat="1 0 0 0" material="3d_printed" type="mesh" mesh="Rotation_Pitch.stl" class="visual" />
+        <geom name="shoulder_visual_1" pos="0 0 0" quat="1 0 0 0" material="sts3215" type="mesh" mesh="Rotation_Pitch_Motor.stl" class="visual" />
+        <body name="upper_arm" pos="0 0.1025 0.0306" quat="0.6216099682706644 -0.7833269096274834 0.0 0.0">
+          <joint name="shoulder_lift" type="hinge" ref="0.0" class="motor" range="0 3.5" axis="1 0 0" />
+          <inertial pos="-1.72052e-05 0.0701802 0.00310545" quat="1.0 0.0 0.0 0.0" mass="0.162409" diaginertia="0.000213312 0.000167164 7.01522e-05" />
+          <geom name="upper_arm_collision" pos="0 0 0" quat="1 0 0 0" type="mesh" mesh="Upper_Arm.stl" class="collision" />
+          <geom name="upper_arm_visual_0" pos="0 0 0" quat="1 0 0 0" material="3d_printed" type="mesh" mesh="Upper_Arm.stl" class="visual" />
+          <geom name="upper_arm_visual_1" pos="0 0 0" quat="1 0 0 0" material="sts3215" type="mesh" mesh="Upper_Arm_Motor.stl" class="visual" />
+          <body name="lower_arm" pos="0 0.11257 0.028" quat="0.7071090180427968 0.7071045443232222 0.0 0.0">
+            <joint name="elbow_flex" type="hinge" ref="0.0" class="motor" range="-3.14158 0" axis="1 0 0" />
+            <inertial pos="-0.00339604 0.00137796 0.0768007" quat="1.0 0.0 0.0 0.0" mass="0.147968" diaginertia="0.000138803 0.000107748 4.84242e-05" />
+            <geom name="lower_arm_collision" pos="0 0 0" quat="1 0 0 0" type="mesh" mesh="Lower_Arm.stl" class="collision" />
+            <geom name="lower_arm_visual_0" pos="0 0 0" quat="1 0 0 0" material="3d_printed" type="mesh" mesh="Lower_Arm.stl" class="visual" />
+            <geom name="lower_arm_visual_1" pos="0 0 0" quat="1 0 0 0" material="sts3215" type="mesh" mesh="Lower_Arm_Motor.stl" class="visual" />
+            <body name="wrist" pos="0 0.0052 0.1349" quat="0.8775825618903728 -0.479425538604203 0.0 0.0">
+              <joint name="wrist_flex" type="hinge" ref="0.0" class="motor" range="-2.5 1.2" axis="1 0 0" />
+              <inertial pos="-0.00852653 -0.0352279 -2.34622e-05" quat="1.0 0.0 0.0 0.0" mass="0.0661321" diaginertia="3.45403e-05 2.39041e-05 1.94704e-05" />
+              <geom name="wrist_collision" pos="0 0 0" quat="1 0 0 0" type="mesh" mesh="Wrist_Pitch_Roll.stl" class="collision" />
+              <geom name="wrist_visual_0" pos="0 0 0" quat="1 0 0 0" material="3d_printed" type="mesh" mesh="Wrist_Pitch_Roll.stl" class="visual" />
+              <geom name="wrist_visual_1" pos="0 0 0" quat="1 0 0 0" material="sts3215" type="mesh" mesh="Wrist_Pitch_Roll_Motor.stl" class="visual" />
+              <body name="gripper" pos="0 -0.0601 0" quat="0.7071090180427968 0.0 0.7071045443232222 0.0">
+                <joint name="wrist_roll" type="hinge" ref="0.0" class="motor" range="-3.14158 3.14158" axis="0 1 0" />
+                <inertial pos="0.00552377 -0.0280167 0.000483583" quat="1.0 0.0 0.0 0.0" mass="0.0929859" diaginertia="5.03136e-05 4.64098e-05 2.72961e-05" />
+                <geom name="gripper_visual_0" pos="0 0 0" quat="1 0 0 0" material="3d_printed" type="mesh" mesh="Fixed_Jaw.stl" class="visual" />
+                <geom name="gripper_visual_1" pos="0 0 0" quat="1 0 0 0" material="sts3215" type="mesh" mesh="Fixed_Jaw_Motor.stl" class="visual" />
+                <body name="jaw" pos="-0.0202 -0.0244 0" quat="6.326794896668469e-06 0.0 0.9999999999799858 0.0">
+                  <joint name="gripper" type="hinge" ref="0.0" class="motor" range="-0.2 2.0" axis="0 0 1" />
+                  <inertial pos="-0.00161745 -0.0303473 0.000449646" quat="1.0 0.0 0.0 0.0" mass="0.0202444" diaginertia="1.11265e-05 8.99651e-06 2.99548e-06" />
+                  <geom name="jaw_visual" pos="0 0 0" quat="1 0 0 0" material="3d_printed" type="mesh" mesh="Moving_Jaw.stl" class="visual" />
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+      <site name="base_link_site" pos="0 0 0" quat="1 0 0 0" />
+      <camera name="front_camera" mode="track" fovy="90.0" quat="4.329637285359678e-17 4.329637285359677e-17 0.7071067811865475 0.7071067811865476" pos="0.0 2.0 0.5" />
+      <camera name="side_camera" mode="track" fovy="90.0" quat="-0.5 -0.4999999999999999 0.5 0.5000000000000001" pos="-2.0 0.0 0.5" />
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="floating_base_ctrl" joint="floating_base" class="motor" />
+    <position name="shoulder_pan_ctrl" joint="shoulder_pan" class="motor" />
+    <position name="shoulder_lift_ctrl" joint="shoulder_lift" class="motor" />
+    <position name="elbow_flex_ctrl" joint="elbow_flex" class="motor" />
+    <position name="wrist_flex_ctrl" joint="wrist_flex" class="motor" />
+    <position name="wrist_roll_ctrl" joint="wrist_roll" class="motor" />
+    <position name="gripper_ctrl" joint="gripper" class="motor" />
+  </actuator>
+
+  <contact>
+    <exclude body1="base_link" body2="shoulder" />
+    <exclude body1="shoulder" body2="upper_arm" />
+    <exclude body1="upper_arm" body2="lower_arm" />
+    <exclude body1="lower_arm" body2="wrist" />
+  </contact>
+
+  <sensor>
+    <framepos name="base_link_site_pos" objtype="site" objname="base_link_site" />
+    <framequat name="base_link_site_quat" objtype="site" objname="base_link_site" />
+    <framelinvel name="base_link_site_linvel" objtype="site" objname="base_link_site" />
+    <frameangvel name="base_link_site_angvel" objtype="site" objname="base_link_site" />
+    <velocimeter name="base_link_site_vel" site="base_link_site" />
+  </sensor>
+</mujoco>
