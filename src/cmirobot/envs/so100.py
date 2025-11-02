@@ -4,6 +4,7 @@ import gymnasium as gym
 import mujoco
 import mujoco.viewer
 import glfw
+from ikpy.chain import Chain
 
 from .transforms import rpy2r, r2rpy,r2w
 from .utils import (
@@ -16,10 +17,16 @@ from .utils import (
 )
 
 class SO100Env(gym.Env):
-    def __init__(self, model_path="so100_scene.xml",render_mode=None,
-                 camera_res=(800, 600)):
+    def __init__(self, model_path="so100_scene.xml"
+                 ,urdf_path="so100/so100.urdf"
+                 ,render_mode=None
+                 ,camera_res=(800, 600)
+                 ,base_body_name='base_link'
+                 ,ee_body_name='jaw'):
         self.render_mode = render_mode
         self.camera_res=camera_res
+        self.base_body_name = base_body_name
+        self.ee_body_name = ee_body_name
         if model_path.startswith(".") or model_path.startswith("/"):
             self.model_path = model_path
         elif model_path.startswith("~"):
@@ -28,19 +35,35 @@ class SO100Env(gym.Env):
             self.model_path = path.join(path.dirname(__file__), "assets", model_path)
         if not path.exists(self.model_path):
             raise OSError(f"File {self.model_path} does not exist")
+        if urdf_path.startswith(".") or urdf_path.startswith("/"):
+            self.urdf_path = urdf_path
+        elif urdf_path.startswith("~"):
+            self.urdf_path = path.expanduser(urdf_path)
+        else:
+            self.urdf_path = path.join(path.dirname(__file__), "assets", urdf_path)
+        if not path.exists(self.urdf_path):
+            raise OSError(f"File {self.urdf_path} does not exist")
+        
         self.model=mujoco.MjModel.from_xml_path(self.model_path)
         self.data=mujoco.MjData(self.model)
         self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
-
+        mujoco.mj_forward(self.model,self.data)
+        self.base_positon,self.base_orientation=self.get_pR_body(body_name=self.base_body_name)
         # self.joint_names = [mujoco.mj_id2name(self.model,mujoco.mjtObj.mjOBJ_JOINT,joint_idx)
         #                          for joint_idx in range(self.model.njnt)]
-        self.joint_names = ['joint1',
-                    'joint2',
-                    'joint3',
-                    'joint4',
-                    'joint5',
-                    'joint6',]
-        
+        self.joint_names = [
+                    'shoulder_pan',
+                    'shoulder_lift',
+                    'elbow_flex',
+                    'wrist_flex',
+                    'wrist_roll',
+                    'gripper']
+        initial_position=self.get_qpos_joints(self.joint_names)
+        self.initial_position=np.concatenate(([0], initial_position))
+        # print("initial_position",self.initial_position)
+
+        self.chain = Chain.from_urdf_file(self.urdf_path)
+
         self.observation_space =  gym.spaces.Dict(
             {
                 "camera1":  gym.spaces.Box(0, 255, shape=(camera_res[0],camera_res[1],3), dtype=int),
@@ -79,8 +102,8 @@ class SO100Env(gym.Env):
         glfw.make_context_current(window)
 
         return {
-            "camera1": self.get_fixed_cam_rgb("egocentric"), 
-            "camera2": self.get_fixed_cam_rgb("egocentric"), 
+            "camera1": self.get_fixed_cam_rgb("agentview"), 
+            "camera2": self.get_fixed_cam_rgb("topview"), 
             "joints":self.data.qpos.copy()
             }
     
@@ -126,7 +149,7 @@ class SO100Env(gym.Env):
         '''
         get the end effector pose of the robot + gripper state
         '''
-        p, R = self.get_pR_body(body_name='tcp_link')
+        p, R = self.get_pR_body(body_name=self.ee_body_name)
         rpy = r2rpy(R)
         return np.concatenate([p, rpy],dtype=np.float32)
     
@@ -136,9 +159,8 @@ class SO100Env(gym.Env):
         }
     def reset(self, seed=None, options=None):
         mujoco.mj_resetData(self.model,self.data)
-        for _ in range(10):
-            mujoco.mj_step(self.model,self.data)
-
+        mujoco.mj_forward(self.model,self.data)
+            
         observation = self._get_obs()
         info = self._get_info()
 
@@ -182,14 +204,14 @@ class SO100Env(gym.Env):
         Returns:
             tuple: (J, err) where J is the Jacobian and err is the error vector.
         """
-        IK_P      = True,
-        IK_R      = True,
-        if p_trgt is None: IK_P = False
-        if R_trgt is None: IK_R = False
-
         J_p,J_R,J_full = self.get_J_body(body_name=body_name)
         p_curr,R_curr = self.get_pR_body(body_name=body_name)
-       
+
+        IK_P      = True,
+        IK_R      = True,
+        if p_trgt is None or np.array_equal(p_curr,p_trgt): IK_P = False
+        if R_trgt is None or np.array_equal(R_curr,R_trgt): IK_R = False
+
         if (IK_P and IK_R):
             p_err = (p_trgt-p_curr)
             R_err = np.linalg.solve(R_curr,R_trgt)
@@ -294,12 +316,22 @@ class SO100Env(gym.Env):
 
         q_curr = self.get_qpos_joints(joint_names=self.joint_names)
         for ik_tick in range(max_ik_tick):
-            J,ik_err_stack = self.get_ik_ingredients(
+            J_list,ik_err_list = [],[]
+            J,ik_err = self.get_ik_ingredients(
                 body_name = body_name_trgt,
                 p_trgt    = target_p,
                 R_trgt    = target_r,
             )   
-            delta_qpos = self.damped_ls(J,ik_err_stack,stepsize=50)
+            J_list.append(J)
+            ik_err_list.append(ik_err)
+            J_stack      = np.vstack(J_list)
+            ik_err_stack = np.hstack(ik_err_list)
+            # Select Jacobian columns that are within the joints to use
+            J_stack_backup = J_stack.copy()
+            J_stack = np.zeros_like(J_stack)
+            J_stack[:,joint_idxs_jac] = J_stack_backup[:,joint_idxs_jac]
+
+            delta_qpos = self.damped_ls(J_stack,ik_err_stack,stepsize=50)
             
             # print("delta_qpos",delta_qpos)
             # print("delta_qpos[joint_idxs_jac]",delta_qpos[joint_idxs_jac])
@@ -326,20 +358,24 @@ class SO100Env(gym.Env):
         
         
     def step(self, action):
-        target_p,target_r=self.get_pR_body(body_name='tcp_link')
-        target_p+=action[:3]
-        target_r=target_r.dot(rpy2r(action[3:6]))
-        # target_r=rpy2r(np.deg2rad([90,-0.,90 ]))
-        qpos=self.solve_ik(
-            body_name_trgt="tcp_link",
-            target_p    = target_p,
-            target_r    = target_r
-        )
-
+        # print("action",action)
+        
+        ee_p,ee_r=self.get_pR_body(body_name=self.ee_body_name)
+        # print("ee_body_p",ee_p)
+        target_p=ee_p+action[:3]
+        target_r=ee_r.dot(rpy2r(action[3:6]))
+        target_r = np.linalg.solve(self.base_orientation,target_r)
+        # print("except",target_p,target_r)
+        joint_angles =self.chain.inverse_kinematics(target_position= target_p-self.base_positon,target_orientation=target_r,initial_position=self.initial_position)
+        # print("joint_angles",joint_angles)
         gripper_cmd = np.array([action[-1]]*4)
         gripper_cmd[[1,3]] *= 0.8
-        self.data.ctrl = np.concatenate([qpos[:6], gripper_cmd])
+        # self.data.ctrl = joint_angles
+        joint_idxs = self.get_idxs_fwd(joint_names=self.joint_names)
+        self.data.qpos[joint_idxs]=joint_angles[1:]
         mujoco.mj_step(self.model, self.data)
+        actual_p,actual_r=self.get_pR_body(body_name=self.ee_body_name)
+        # print("actual",actual_p,actual_r)
 
         if self.render_mode == "human":
             self.render()
