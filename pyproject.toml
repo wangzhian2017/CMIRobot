@@ -13,5 +13,6 @@ dependencies = [
     "gymnasium>=0.29.1",
     "pygame>=2.6.1",
     "ikpy>=3.4.2",
+    "av>=14.2.0",
     "pre-commit"
     ]

@@ -82,7 +82,7 @@ class SO100Env(gym.Env):
         cam = mujoco.MjvCamera()
         cam.fixedcamid =camera_id
         cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
-        viewport = mujoco.MjrRect(0,0,self.camera_res[0],self.camera_res[1]) 
+        viewport = mujoco.MjrRect(0,0,self.camera_res[1],self.camera_res[0]) 
         scn  = mujoco.MjvScene(self.model, maxgeom=10000)
         context  = mujoco.MjrContext(self.model, mujoco.mjtFontScale.mjFONTSCALE_150.value)
         # 更新场景
@@ -98,7 +98,7 @@ class SO100Env(gym.Env):
         # 初始化 OpenGL 上下文（离屏渲染）
         glfw.init()
         glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
-        window = glfw.create_window(self.camera_res[0], self.camera_res[1], "Offscreen", None, None)
+        window = glfw.create_window(self.camera_res[1], self.camera_res[0], "Offscreen", None, None)
         glfw.make_context_current(window)
 
         return {
